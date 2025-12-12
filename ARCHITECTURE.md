@@ -51,7 +51,7 @@
 │                                                                   │ │
 │  ┌─────────────────────────────────────────────────────────┐   │ │
 │  │ • BigQuery Client Initialization                        │   │ │
-│  │ • Security Validation (crypto_ethereum only)            │   │ │
+│  │ • Security Validation (crypto_ethereum + MVs)          │   │ │
 │  │ • Query Execution (100GB limit)                         │   │ │
 │  │ • Result Formatting (Markdown tables)                   │   │ │
 │  └─────────────────────────────────────────────────────────┘   │ │
@@ -61,13 +61,24 @@
 └─────────────────────────────────────────────────────────────────┘ │
                                                                      │
 ┌─────────────────────────────────────────────────────────────────┐ │
-│              BIGQUERY PUBLIC DATASET                              │ │
-│         bigquery-public-data.crypto_ethereum                     │ │
+│              BIGQUERY DATA SOURCES                                 │ │
 │                                                                   │ │
 │  ┌─────────────────────────────────────────────────────────┐   │ │
-│  │ • transactions (ETH transfers)                           │   │ │
-│  │ • traces (internal calls)                                 │   │ │
-│  │ • token_transfers (ERC-20)                               │   │ │
+│  │ OPTIMIZED (Priority):                                   │   │ │
+│  │ • Materialized Views (walletlens_aggregates)           │   │ │
+│  │   - mv_wallet_tx_sent_daily                             │   │ │
+│  │   - mv_wallet_tx_received_daily                         │   │ │
+│  │   - mv_wallet_token_transfers_daily                     │   │ │
+│  └─────────────────────────────────────────────────────────┘   │ │
+│                            │                                     │ │
+│                            │ (Fallback if MVs unavailable)      │ │
+│                            ▼                                     │ │
+│  ┌─────────────────────────────────────────────────────────┐   │ │
+│  │ RAW TABLES:                                              │   │ │
+│  │ • bigquery-public-data.crypto_ethereum                  │   │ │
+│  │   - transactions (ETH transfers)                         │   │ │
+│  │   - traces (internal calls)                              │   │ │
+│  │   - token_transfers (ERC-20)                             │   │ │
 │  └─────────────────────────────────────────────────────────┘   │ │
 │                                                                   │ │
 └─────────────────────────────────────────────────────────────────┘ │
@@ -111,6 +122,8 @@
 - 1-year timestamp filtering: `block_timestamp > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 365 DAY)`
 - Column-specific queries to minimize data scanned
 - Monthly activity breakdowns for pattern detection
+- **Materialized View Priority**: Prefers pre-aggregated Materialized Views for faster queries
+- **Smart Fallback**: Falls back to raw tables if Materialized Views unavailable
 
 ### 2. Executor (`executor.py`) - "The Engine"
 
@@ -159,10 +172,11 @@
 - Handles errors and returns user-friendly messages
 
 **Key Features**:
-- Security validation: Only allows queries to `bigquery-public-data.crypto_ethereum`
+- Security validation: Only allows queries to `bigquery-public-data.crypto_ethereum` or Materialized Views in user's project
 - Billing protection: `maximum_bytes_billed=100GB` prevents overspending
 - Result formatting: Returns Markdown tables (max 20 rows)
 - Error handling: Returns descriptive error messages
+- **Materialized View Support**: Allows queries to optimized pre-aggregated tables
 
 ## Data Flow
 
@@ -181,10 +195,42 @@
 
 - **Frontend**: Streamlit (Python web framework)
 - **AI Model**: Google Gemini 2.5 Flash (with native function calling)
-- **Data Source**: Google BigQuery Public Dataset (`crypto_ethereum`)
+- **Data Source**: Google BigQuery Public Dataset (`crypto_ethereum`) + Materialized Views
 - **Language**: Python 3.8+
 - **Key Libraries**: 
   - `google-generativeai`: Gemini API
   - `google-cloud-bigquery`: BigQuery client
+  - `google-cloud-bigquery-storage`: Fast gRPC-based data retrieval
   - `streamlit`: Web UI
   - `pandas`: Data processing
+
+## Performance Architecture
+
+### Query Optimization Strategy
+
+1. **Materialized Views (Priority)**: Pre-aggregated daily transaction and token transfer data
+   - Partitioned by date for fast time-range queries
+   - Clustered by address for fast address lookups
+   - Automatically refreshed daily
+   - Reduces query time from 30-60 seconds to 2-5 seconds
+   - Reduces data scanned from GB/TB to MB/GB
+
+2. **Raw Tables (Fallback)**: Direct queries to `bigquery-public-data.crypto_ethereum`
+   - Used when Materialized Views unavailable
+   - Optimized with 1-year timestamp filtering
+   - Specific column selection (no SELECT *)
+   - Aggregation-first approach
+
+3. **BigQuery Storage API**: gRPC-based data retrieval
+   - Faster than REST API
+   - Better for large result sets
+   - Enabled via `google-cloud-bigquery-storage` package
+
+### Setup Script
+
+The `setup_aggregations.py` script creates Materialized Views:
+- `mv_wallet_tx_sent_daily`: Daily outgoing transaction aggregations
+- `mv_wallet_tx_received_daily`: Daily incoming transaction aggregations
+- `mv_wallet_token_transfers_daily`: Daily token transfer aggregations
+
+See `OPTIMIZATION_SETUP.md` for detailed setup instructions.

@@ -112,26 +112,42 @@ with tab1:
         classification = None
         safety_verdict = None
         
-        # Extract safety verdict (🟢 SAFE, 🟡 CAUTION, 🔴 HIGH RISK)
-        verdict_pattern = r'(🟢|🟡|🔴)\s*(SAFE|CAUTION|HIGH RISK|DO NOT INTERACT)'
-        verdict_match = re.search(verdict_pattern, result_text, re.IGNORECASE)
-        if verdict_match:
-            emoji = verdict_match.group(1)
-            verdict_text = verdict_match.group(2)
-            safety_verdict = f"{emoji} {verdict_text}"
+        # Extract safety verdict - look for "Is it safe to interact? 🔴 HIGH RISK" format
+        # Also handle standalone verdict patterns
+        verdict_patterns = [
+            r'Is it safe to interact\?\s*(🟢|🟡|🔴)\s*(SAFE|CAUTION|HIGH RISK|DO NOT INTERACT)',
+            r'(🟢|🟡|🔴)\s*(SAFE|CAUTION|HIGH RISK|DO NOT INTERACT)',
+            r'\*\*(🟢|🟡|🔴)\s*(SAFE|CAUTION|HIGH RISK|DO NOT INTERACT)\*\*'
+        ]
+        for pattern in verdict_patterns:
+            verdict_match = re.search(pattern, result_text, re.IGNORECASE)
+            if verdict_match:
+                emoji = verdict_match.group(1)
+                verdict_text = verdict_match.group(2)
+                safety_verdict = f"{emoji} {verdict_text}"
+                break
         
-        # Extract classification
+        # Extract classification - look for "Who is this? Compromised Wallet" format
+        # Also handle standalone classification patterns
+        # Priority order: Check for full phrases first, then individual terms
         classification_patterns = [
+            r'Who is this\?\s*(Compromised Wallet|Merchant|Exchange|Bot|MEV|Whale|Treasury|Exploiter|Attacker)',
+            r'classified as (?:a |an )?(Compromised Wallet|Merchant|Exchange|Bot|MEV|Whale|Treasury|Exploiter|Attacker)',
+            r'(Compromised Wallet)',  # Full phrase - check before individual terms
             r'(Merchant|Exchange)',
             r'(Bot|MEV)',
             r'(Whale|Treasury)',
-            r'(Exploiter|Attacker)',
-            r'(Compromised Wallet|Victim)'
+            r'(Exploiter|Attacker)'
         ]
         for pattern in classification_patterns:
             match = re.search(pattern, result_text, re.IGNORECASE)
             if match:
                 classification = match.group(1)
+                # Ensure "Compromised Wallet" is captured as full phrase
+                if "Compromised Wallet" in result_text and classification != "Compromised Wallet":
+                    # Check if "Compromised Wallet" appears in the text
+                    if re.search(r'Compromised Wallet', result_text, re.IGNORECASE):
+                        classification = "Compromised Wallet"
                 break
         
         return classification, safety_verdict

@@ -201,15 +201,25 @@ Provide your Safety Verdict at the TOP of your response, then detailed reasoning
                         
                         # Log the result
                         if isinstance(result, str):
-                            # Check if it's an error
+                            # Check if it's an error or empty result
                             if result.startswith("Error:") or result.startswith("SQL Error:"):
                                 # Log full error for debugging (truncate only for display)
                                 error_preview = result[:200] + "..." if len(result) > 200 else result
                                 self.memory.log_step(f"Query error: {error_preview}")
+                            elif result.strip() == "No results found.":
+                                # Handle empty result case - prevents misleading "-1 rows shown" log
+                                self.memory.log_step("Query returned no results")
                             else:
                                 # Count approximate rows from markdown (rough estimate)
-                                row_count = result.count('\n') - 1  # Subtract header row
-                                self.memory.log_step(f"Query returned results ({row_count} rows shown)")
+                                # Only count if it looks like a markdown table (has pipe characters and newlines)
+                                if '|' in result and '\n' in result:
+                                    row_count = result.count('\n') - 1  # Subtract header row
+                                    if row_count >= 0:  # Ensure non-negative count
+                                        self.memory.log_step(f"Query returned results ({row_count} rows shown)")
+                                    else:
+                                        self.memory.log_step("Query returned results")
+                                else:
+                                    self.memory.log_step("Query returned results")
                         else:
                             self.memory.log_step(f"Query returned results")
                         
