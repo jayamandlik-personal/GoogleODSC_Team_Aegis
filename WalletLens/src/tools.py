@@ -1,11 +1,13 @@
+"""Tools for querying blockchain data from BigQuery."""
+
 import os
 from dotenv import load_dotenv
 from google.cloud import bigquery
 import pandas as pd
 
-load_dotenv()
+load_dotenv(override=True)
 
-def query_blockchain(sql_query: str) -> str: # <--- Note return type is str
+def query_blockchain(sql_query: str) -> str:
     """
     Executes a SQL query on the Ethereum blockchain.
     """
@@ -22,26 +24,24 @@ def query_blockchain(sql_query: str) -> str: # <--- Note return type is str
         if "crypto_ethereum" not in sql_query and "bigquery-public-data" not in sql_query:
             return "Error: Only 'bigquery-public-data.crypto_ethereum' is allowed."
 
-        # Run Query
-        print(f"Executing SQL: {sql_query[:100]}...") # Debug log
-        query_job = client.query(sql_query)
-        
-        # Wait for the job to complete and handle errors
-        try:
-            result = query_job.result()
-            df = result.to_dataframe()
-            
-            if df.empty:
-                return "No results found."
+        # CONFIGURATION FIX: Increase the safety limit
+        # We allow up to 100 GB (100 * 1024^3 bytes) per query.
+        # This prevents the "Query exceeded limit for bytes billed" error for 1-year scans.
+        job_config = bigquery.QueryJobConfig(
+            maximum_bytes_billed=100 * 1024 * 1024 * 1024  # 100 GB limit
+        )
 
-            return df.head(20).to_markdown(index=False)
-        except Exception as query_error:
-            # Get more detailed error information
-            error_msg = str(query_error)
-            if hasattr(query_job, 'errors') and query_job.errors:
-                error_details = '; '.join([str(err) for err in query_job.errors])
-                error_msg = f"{error_msg}. Details: {error_details}"
-            return f"SQL Error: {error_msg}"
+        print(f"Executing SQL: {sql_query[:50]}...") 
+        
+        # Pass the config here
+        query_job = client.query(sql_query, job_config=job_config)
+        result = query_job.result()
+        df = result.to_dataframe()
+        
+        if df.empty:
+            return "No results found."
+
+        return df.head(20).to_markdown(index=False)
+
     except Exception as e:
-        # Handle any other errors (client initialization, etc.)
-        return f"Error: {str(e)}"
+        return f"SQL Error: {str(e)}"

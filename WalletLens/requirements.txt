@@ -1,8 +1,10 @@
 google-generativeai
 google-cloud-bigquery
+google-cloud-bigquery-storage
 pandas
 db-dtypes
 tabulate
 streamlit
 python-dotenv
+watchdog
 

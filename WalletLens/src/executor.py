@@ -137,7 +137,20 @@ class WalletAgentExecutor:
         self.memory.log_step(f"Starting analysis for address: {address}")
         
         # Initial prompt to analyze the address
-        prompt = f"Analyze the Ethereum wallet address: {address}. Classify it as Bot, Merchant, or Whale and provide detailed reasoning."
+        prompt = f"""Analyze the Ethereum wallet address: {address}. 
+
+You must answer TWO questions:
+1. **Who is this?** (Classify as: Merchant/Exchange, Bot/MEV, Whale/Treasury, Exploiter, or Compromised/Drained Wallet)
+2. **Is it safe to interact?** (Provide Safety Verdict: 🟢 SAFE, 🟡 CAUTION, or 🔴 HIGH RISK)
+
+CRITICAL CHECKS:
+- First transaction date (MIN(block_timestamp)) - Calculate address age
+- Activity window (MAX - MIN block_timestamp) - Check if concentrated in short period
+- Flow direction: Mostly INCOMING (attacker/merchant) or OUTGOING (victim/payer)?
+- Token diversity: Did they dump multiple tokens at once? (Drain indicator)
+- Total value moved in ETH
+
+Provide your Safety Verdict at the TOP of your response, then detailed reasoning with transaction dates and values."""
         
         try:
             # Send the prompt
