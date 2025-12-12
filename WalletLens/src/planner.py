@@ -57,13 +57,28 @@ LIMIT 10
 ```
 
 **Important BigQuery Table Information:**
+
+**OPTIMIZED TABLES (Use these if available - much faster!):**
+- Materialized Views in your project: 
+  - `{GOOGLE_CLOUD_PROJECT}.walletlens_aggregates.mv_wallet_tx_sent_daily` - Pre-aggregated daily sent transactions
+  - `{GOOGLE_CLOUD_PROJECT}.walletlens_aggregates.mv_wallet_tx_received_daily` - Pre-aggregated daily received transactions
+  - `{GOOGLE_CLOUD_PROJECT}.walletlens_aggregates.mv_wallet_token_transfers_daily` - Pre-aggregated daily token transfer stats
+  - `{GOOGLE_CLOUD_PROJECT}.walletlens_aggregates.wallet_summary_1y` - Pre-computed wallet-level aggregations (for future use)
+
+**RAW TABLES (Fallback if optimized tables don't exist):**
 - `bigquery-public-data.crypto_ethereum.transactions` - Standard ETH transactions (columns: `from_address`, `to_address`, `value`, `block_timestamp`, `hash`)
 - `bigquery-public-data.crypto_ethereum.traces` - Internal transactions/calls (columns: `from_address`, `to_address`, `value`, `block_timestamp`)
 - `bigquery-public-data.crypto_ethereum.token_transfers` - ERC-20 token transfers (columns: `from_address`, `to_address`, `value`, `token_address`, `block_timestamp`)
+
+**QUERY STRATEGY:**
+1. **FIRST**: Try querying Materialized Views/Summary Tables (if they exist) - these are pre-aggregated and much faster
+2. **FALLBACK**: If optimized tables don't exist or don't have the data, query raw tables with aggregations
+
+**SQL Rules:**
 - **ALWAYS use LOWER() for address comparisons** - Ethereum addresses are case-insensitive but stored in mixed case
 - Use proper SQL syntax with backticks: `bigquery-public-data.crypto_ethereum.transactions`
 - Use single quotes for address strings: '0x...'
-- **CRITICAL**: Always filter by `block_timestamp > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 365 DAY)` for 1-year lookback
+- **CRITICAL**: Always filter by `block_timestamp > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 365 DAY)` for 1-year lookback (or use partitioned Materialized Views)
 
 **CRITICAL PERFORMANCE RULES:**
 - **NEVER use SELECT *** - Only select the specific columns you need: `from_address`, `to_address`, `value`, `block_timestamp`
@@ -72,16 +87,42 @@ LIMIT 10
 - Combine multiple metrics in single queries
 - Use LOWER() in WHERE clause: `WHERE LOWER(from_address) = LOWER('0x...') OR LOWER(to_address) = LOWER('0x...')`
 
-**Query Execution Order:**
-1. Query `transactions` table with 1-year filter for standard ETH flows
+**Query Execution Order (Optimized - Use Materialized Views First!):**
+1. **PREFERRED**: Query Materialized Views if available (much faster!):
+   ```sql
+   -- Combine sent and received from separate Materialized Views
+   SELECT 
+       COALESCE(SUM(s.tx_count_sent), 0) as total_tx_sent,
+       COALESCE(SUM(r.tx_count_received), 0) as total_tx_received,
+       COALESCE(SUM(s.eth_sent), 0) as total_eth_sent,
+       COALESCE(SUM(r.eth_received), 0) as total_eth_received,
+       LEAST(MIN(s.day), MIN(r.day)) as first_seen,
+       GREATEST(MAX(s.day), MAX(r.day)) as last_seen
+   FROM `{GOOGLE_CLOUD_PROJECT}.walletlens_aggregates.mv_wallet_tx_sent_daily` s
+   FULL OUTER JOIN `{GOOGLE_CLOUD_PROJECT}.walletlens_aggregates.mv_wallet_tx_received_daily` r
+       ON s.address = r.address AND s.day = r.day
+   WHERE s.address = LOWER('0x...') OR r.address = LOWER('0x...')
+   ```
+   
+2. **FALLBACK**: Query raw `transactions` table with 1-year filter for standard ETH flows
    - Use LOWER() for case-insensitive address matching
    - Only select: `from_address`, `to_address`, `value`, `block_timestamp`
    - Use aggregations - NEVER fetch all rows
-2. Query `token_transfers` table with 1-year filter for token activity
-   - Only select: `from_address`, `to_address`, `value`, `token_address`, `block_timestamp`
+
+3. **PREFERRED**: Query Materialized View for token activity:
+   ```sql
+   SELECT 
+       SUM(unique_tokens_sent) as total_unique_tokens,
+       COUNT(*) as days_with_token_activity
+   FROM `{GOOGLE_CLOUD_PROJECT}.walletlens_aggregates.mv_wallet_token_transfers_daily`
+   WHERE address = LOWER('0x...')
+   ```
+   
+4. **FALLBACK**: Query `token_transfers` table with 1-year filter for token activity
    - Check for multi-token dumps (drain indicator)
    - Use COUNT(DISTINCT token_address) for token diversity
-3. Query `traces` table with 1-year filter for internal transactions
+
+5. Query `traces` table with 1-year filter for internal transactions (no Materialized View yet)
    - Only select: `from_address`, `to_address`, `value`, `block_timestamp`
    - Only aggregate, don't fetch individual transaction details
 

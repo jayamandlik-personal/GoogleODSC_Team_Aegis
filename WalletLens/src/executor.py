@@ -31,8 +31,12 @@ class WalletAgentExecutor:
         
         genai.configure(api_key=api_key)
         
-        # Get system instruction from planner
+        # Get system instruction from planner and inject project ID
+        project_id = os.getenv('GOOGLE_CLOUD_PROJECT', '')
         system_instruction = WalletLensPlanner.get_system_instruction()
+        # Replace placeholder with actual project ID
+        if project_id:
+            system_instruction = system_instruction.replace('{GOOGLE_CLOUD_PROJECT}', project_id)
         
         # Define the tool function for Gemini
         tools = [
