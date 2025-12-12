@@ -20,9 +20,10 @@ def query_blockchain(sql_query: str) -> str:
         # Initialize Client
         client = bigquery.Client(project=project_id)
         
-        # Security Check
-        if "crypto_ethereum" not in sql_query and "bigquery-public-data" not in sql_query:
-            return "Error: Only 'bigquery-public-data.crypto_ethereum' is allowed."
+        # Security Check - BOTH strings must be present
+        # Using OR: blocks if EITHER is missing (requires BOTH to be present)
+        if "crypto_ethereum" not in sql_query or "bigquery-public-data" not in sql_query:
+            return "Error: Only 'bigquery-public-data.crypto_ethereum' dataset is allowed. Query must contain both 'bigquery-public-data' and 'crypto_ethereum'."
 
         # CONFIGURATION FIX: Increase the safety limit
         # We allow up to 100 GB (100 * 1024^3 bytes) per query.

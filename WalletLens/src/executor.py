@@ -140,7 +140,7 @@ class WalletAgentExecutor:
         prompt = f"""Analyze the Ethereum wallet address: {address}. 
 
 You must answer TWO questions:
-1. **Who is this?** (Classify as: Merchant/Exchange, Bot/MEV, Whale/Treasury, Exploiter, or Compromised/Drained Wallet)
+1. **Who is this?** (Classify as: Merchant/Exchange, Bot/MEV, Whale/Treasury, Exploiter, or Compromised Wallet)
 2. **Is it safe to interact?** (Provide Safety Verdict: 🟢 SAFE, 🟡 CAUTION, or 🔴 HIGH RISK)
 
 CRITICAL CHECKS:
@@ -181,7 +181,10 @@ Provide your Safety Verdict at the TOP of your response, then detailed reasoning
                     # No function calls, we have the final response
                     break
                 
-                # Process each function call
+                # Collect all function responses before sending (fixes multi-function call protocol)
+                function_responses = []
+                
+                # Process each function call and collect results
                 for function_call in function_calls:
                     function_name = function_call.name
                     
@@ -213,8 +216,13 @@ Provide your Safety Verdict at the TOP of your response, then detailed reasoning
                             response={"result": result}  # Wrap in dict for FunctionResponse
                         )
                         
-                        # Send function response back to model
-                        response = self.chat.send_message(function_response)
+                        # Collect the response (don't send yet)
+                        function_responses.append(function_response)
+                
+                # Send all function responses together in a single message
+                # This ensures the model sees all results at once for proper context
+                if function_responses:
+                    response = self.chat.send_message(function_responses)
             
             # Get the final text response
             if response.candidates and len(response.candidates) > 0:
