@@ -3,7 +3,7 @@
 This script creates optimized views/tables that pre-compute wallet statistics to avoid
 scanning petabytes of data on every query.
 
-Run this once to set up the optimized data structures in your BigQuery project.
+Run this once to set up the optimized data structures.
 """
 
 import os
@@ -80,30 +80,10 @@ def setup_materialized_views(client: bigquery.Client, project_id: str, dataset_i
     GROUP BY day, address
     """
     
-    # Summary Table: Wallet-level aggregations (updated daily)
-    summary_table = f"""
-    CREATE TABLE IF NOT EXISTS `{project_id}.{dataset_id}.wallet_summary_1y`
-    (
-        address STRING,
-        first_seen TIMESTAMP,
-        last_seen TIMESTAMP,
-        total_tx_count INT64,
-        total_eth_received FLOAT64,
-        total_eth_sent FLOAT64,
-        unique_receivers INT64,
-        unique_senders INT64,
-        unique_tokens_sent INT64,
-        last_updated TIMESTAMP
-    )
-    PARTITION BY DATE(last_updated)
-    CLUSTER BY address
-    """
-    
     queries = [
         ("Materialized View: Daily Transactions (Sent)", mv_transactions_sent),
         ("Materialized View: Daily Transactions (Received)", mv_transactions_received),
-        ("Materialized View: Token Transfers", mv_token_transfers),
-        ("Summary Table: Wallet Aggregations", summary_table)
+        ("Materialized View: Token Transfers", mv_token_transfers)
     ]
     
     for name, query in queries:

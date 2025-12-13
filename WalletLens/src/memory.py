@@ -49,7 +49,8 @@ class AnalysisHistory:
         self.history: List[Dict[str, Any]] = []
     
     def add_analysis(self, address: str, result: str, classification: Optional[str] = None, 
-                    safety_verdict: Optional[str] = None, timestamp: Optional[datetime] = None):
+                    safety_verdict: Optional[str] = None, timestamp: Optional[datetime] = None,
+                    protection_report: Optional[Any] = None):
         """
         Add an analysis to history.
         
@@ -68,7 +69,8 @@ class AnalysisHistory:
             'result': result,
             'classification': classification,
             'safety_verdict': safety_verdict,
-            'timestamp': timestamp
+            'timestamp': timestamp,
+            'protection_report': protection_report
         }
         
         # Remove if address already exists

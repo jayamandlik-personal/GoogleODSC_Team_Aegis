@@ -63,7 +63,6 @@ LIMIT 10
   - `{GOOGLE_CLOUD_PROJECT}.walletlens_aggregates.mv_wallet_tx_sent_daily` - Pre-aggregated daily sent transactions
   - `{GOOGLE_CLOUD_PROJECT}.walletlens_aggregates.mv_wallet_tx_received_daily` - Pre-aggregated daily received transactions
   - `{GOOGLE_CLOUD_PROJECT}.walletlens_aggregates.mv_wallet_token_transfers_daily` - Pre-aggregated daily token transfer stats
-  - `{GOOGLE_CLOUD_PROJECT}.walletlens_aggregates.wallet_summary_1y` - Pre-computed wallet-level aggregations (for future use)
 
 **RAW TABLES (Fallback if optimized tables don't exist):**
 - `bigquery-public-data.crypto_ethereum.transactions` - Standard ETH transactions (columns: `from_address`, `to_address`, `value`, `block_timestamp`, `hash`)

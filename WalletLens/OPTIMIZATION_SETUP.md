@@ -21,8 +21,7 @@ python setup_aggregations.py
 
 This will create:
 - **Materialized Views**: `mv_wallet_tx_sent_daily` and `mv_wallet_tx_received_daily` - Daily transaction aggregations
-- **Materialized View**: `mv_wallet_token_transfers_daily` - Daily token transfer aggregations  
-- **Summary Table**: `wallet_summary_1y` - Wallet-level aggregations (for future use)
+- **Materialized View**: `mv_wallet_token_transfers_daily` - Daily token transfer aggregations
 
 ### Step 2: Verify Setup
 

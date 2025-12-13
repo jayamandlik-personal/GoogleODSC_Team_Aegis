@@ -98,6 +98,48 @@
 │                            ▼                                     │ │
 └─────────────────────────────────────────────────────────────────┘ │
                                                                      │
+┌─────────────────────────────────────────────────────────────────┐ │
+│              PROTECTION LAYER (Multi-Agent Pipeline)            │ │
+│                                                                   │ │
+│  ┌─────────────────────────────────────────────────────────┐   │ │
+│  │ Agent A: Signals Extractor (signals_extractor.py)      │   │ │
+│  │ • Extracts coded signals from metrics                   │   │ │
+│  │ • Parses execution logs for errors                      │   │ │
+│  │ • Generates Signal objects with evidence                │   │ │
+│  └─────────────────────────────────────────────────────────┘   │ │
+│                            │                                     │ │
+│                            │ Signals                            │ │
+│                            ▼                                     │ │
+│  ┌─────────────────────────────────────────────────────────┐   │ │
+│  │ Agent B: Interpreter (executor.py)                      │   │ │
+│  │ • Generates soft-language interpretation                 │   │ │
+│  │ • Includes data quality limitations                      │   │ │
+│  │ • Uses "may be consistent with" language                 │   │ │
+│  └─────────────────────────────────────────────────────────┘   │ │
+│                            │                                     │ │
+│                            │ Interpretation                     │ │
+│                            ▼                                     │ │
+│  ┌─────────────────────────────────────────────────────────┐   │ │
+│  │ Agent C: Protection Advisor (protection_advisor.py)    │   │ │
+│  │ • Rule-based protection recommendations                 │   │ │
+│  │ • Maps signals/classification/verdict → protections      │   │ │
+│  │ • No scores, no blocking decisions                     │   │ │
+│  └─────────────────────────────────────────────────────────┘   │ │
+│                            │                                     │ │
+│                            │ Protections                        │ │
+│                            ▼                                     │ │
+│  ┌─────────────────────────────────────────────────────────┐   │ │
+│  │ Agent D: Stakeholder Formatter (stakeholder_views.py)  │   │ │
+│  │ • Renders User View (plain English)                     │   │ │
+│  │ • Renders Customer/Treasury View                       │   │ │
+│  │ • Renders VASP View (JSON)                             │   │ │
+│  │ • Renders Financial Institution View                    │   │ │
+│  └─────────────────────────────────────────────────────────┘   │ │
+│                            │                                     │ │
+│                            │ Formatted Views                     │ │
+│                            ▼                                     │ │
+└─────────────────────────────────────────────────────────────────┘ │
+                                                                     │
                             ┌─────────────┐                         │
                             │   USER UI   │                         │
                             │  (Display)  │                         │
@@ -178,6 +220,79 @@
 - Error handling: Returns descriptive error messages
 - **Materialized View Support**: Allows queries to optimized pre-aggregated tables
 
+### 5. Protection Layer - Multi-Agent Pipeline
+
+**Purpose**: Provides assistive risk assessment with signals, confidence, and protective actions (no scores, no blocking decisions).
+
+#### 5.1 Protection Models (`protection_models.py`)
+
+**Purpose**: Defines data structures for protection reports.
+
+**Key Components**:
+- `ProtectionReport`: Main report structure with signals, protections, data quality
+- `Signal`: Coded signal with evidence keys and severity
+- `Protection`: Recommended protective action with priority
+- `DataQuality`: Data quality indicators (complete, partial, missing_views, bytes_limited)
+- `Trace`: Audit trace information
+
+#### 5.2 Signals Extractor (`signals_extractor.py`) - Agent A
+
+**Purpose**: Extracts coded signals from metrics and query outcomes.
+
+**Key Responsibilities**:
+- Parses metrics from analysis result text
+- Extracts activity signals (SHORT_LIVED, BURST_ACTIVITY, etc.)
+- Extracts flow signals (HIGH_VALUE_FLOW, OUTFLOW_DOMINANT, etc.)
+- Extracts counterparty patterns
+- Detects data quality issues (MISSING_MV, BYTES_LIMITED, PARTIAL_DATA)
+
+**Key Features**:
+- Fact-based signal extraction (no scoring)
+- Evidence keys for traceability
+- Severity categorization (LOW/MEDIUM/HIGH)
+
+#### 5.3 Tool Error Parser (`tool_error_parser.py`)
+
+**Purpose**: Parses execution logs to extract errors and data quality issues.
+
+**Key Responsibilities**:
+- Detects missing Materialized Views
+- Detects bytes billed exceeded errors
+- Summarizes query outcomes
+- Provides structured error information
+
+#### 5.4 Protection Advisor (`protection_advisor.py`) - Agent C
+
+**Purpose**: Rule-based mapping from signals/classification/verdict to protection recommendations.
+
+**Key Responsibilities**:
+- Maps classification → default protections
+- Maps signals → protections
+- Maps verdict → base protections
+- Prioritizes protections (P1, P2, P3)
+- Limits to top 6 protections
+
+**Key Features**:
+- No numeric scores
+- No blocking decisions (BLOCK/ALLOW)
+- Deterministic rule-based recommendations
+- Classification-specific protection mappings
+
+#### 5.5 Stakeholder Views (`stakeholder_views.py`) - Agent D
+
+**Purpose**: Renders protection reports for different stakeholders.
+
+**Key Views**:
+- **User View**: Plain English summary with top 3 signals and protections
+- **Customer/Treasury View**: Setup guidance, controls checklist, training tips
+- **VASP View**: Machine-readable JSON output for integration
+- **Financial Institution View**: Evidence-based indicators, audit trace
+
+**Key Features**:
+- Different output formats for different use cases
+- User-controlled AI Recommendations toggle
+- Evidence-based reporting for compliance
+
 ## Data Flow
 
 1. **User Input** → Streamlit UI receives wallet address
@@ -189,7 +304,13 @@
 7. **Response Loop** → Executor sends result back to Gemini, repeats if needed
 8. **Final Analysis** → Gemini generates classification and safety verdict
 9. **Memory Logging** → All steps logged to Memory module
-10. **UI Display** → Results shown to user with execution logs
+10. **Protection Layer Processing**:
+    - **Signals Extraction**: Extracts coded signals from metrics and logs
+    - **Error Parsing**: Parses logs for data quality issues
+    - **Interpretation**: Generates soft-language interpretation
+    - **Protection Recommendations**: Maps signals to protective actions
+    - **Stakeholder Formatting**: Renders appropriate view for user
+11. **UI Display** → Results shown to user with ProtectionReport and execution logs
 
 ## Technology Stack
 
@@ -234,3 +355,75 @@ The `setup_aggregations.py` script creates Materialized Views:
 - `mv_wallet_token_transfers_daily`: Daily token transfer aggregations
 
 See `OPTIMIZATION_SETUP.md` for detailed setup instructions.
+
+## Integration Architecture
+
+### REST API Integration
+
+**Endpoint Structure**:
+- `POST /api/v1/analyze` - Analyze wallet address
+- `GET /api/v1/analysis/{address}` - Retrieve cached analysis
+- `POST /api/v1/batch` - Batch analysis
+
+**Request Format**:
+```json
+{
+  "address": "0x...",
+  "view": "user|vasp|fi|customer",
+  "ai_recommendations": true
+}
+```
+
+**Response Format**:
+```json
+{
+  "protection_report": {
+    "classification": "...",
+    "verdict": "...",
+    "confidence_level": "...",
+    "observed_signals": [...],
+    "recommended_protections": [...],
+    "data_quality": {...}
+  }
+}
+```
+
+### Webhook Integration
+
+**Event Types**:
+- `wallet.analysis.complete` - Analysis completed
+- `wallet.high_risk.detected` - High-risk address detected
+- `wallet.exploiter.detected` - Exploiter classification
+
+**Webhook Payload**:
+```json
+{
+  "event": "wallet.analysis.complete",
+  "address": "0x...",
+  "protection_report": {...},
+  "timestamp": "2025-12-12T10:00:00Z"
+}
+```
+
+### WebSocket Integration
+
+**Connection Flow**:
+1. Client connects to `wss://api.walletlens.com/v1/stream`
+2. Subscribe to addresses: `{"action": "subscribe", "addresses": ["0x..."]}`
+3. Receive real-time updates as analysis progresses
+4. Receive final ProtectionReport when complete
+
+### SDK Integration
+
+**Supported Languages**:
+- Python: `walletlens-python`
+- JavaScript/TypeScript: `@walletlens/sdk`
+- Go: `github.com/walletlens/go-sdk`
+
+**Example Usage**:
+```python
+from walletlens import WalletLensClient
+
+client = WalletLensClient(api_key="YOUR_API_KEY")
+report = client.analyze("0x...", view="user", ai_recommendations=True)
+```

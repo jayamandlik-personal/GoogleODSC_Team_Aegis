@@ -1,20 +1,31 @@
 """Executor class that sets up and runs the Gemini chat model with tools."""
 
 import os
+import re
+import uuid
+from datetime import datetime
 from dotenv import load_dotenv
 import google.generativeai as genai
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional, Tuple
 
 # Handle both relative and absolute imports
 try:
     from .tools import query_blockchain
     from .planner import WalletLensPlanner
     from .memory import WalletMemory
+    from .protection_models import ProtectionReport, Signal, DataQuality, Trace
+    from .signals_extractor import extract_signals, parse_metrics_from_result
+    from .tool_error_parser import parse_logs_for_errors, get_query_outcomes_summary
+    from .protection_advisor import recommend_protections
 except ImportError:
     # Fallback to absolute imports when running as script
     from tools import query_blockchain
     from planner import WalletLensPlanner
     from memory import WalletMemory
+    from protection_models import ProtectionReport, Signal, DataQuality, Trace
+    from signals_extractor import extract_signals, parse_metrics_from_result
+    from tool_error_parser import parse_logs_for_errors, get_query_outcomes_summary
+    from protection_advisor import recommend_protections
 
 # Load environment variables
 load_dotenv()
@@ -127,6 +138,140 @@ class WalletAgentExecutor:
         
         # Initialize chat
         self.chat = self.model.start_chat(history=[])
+    
+    def _extract_classification_and_verdict(self, result_text: str) -> Tuple[Optional[str], Optional[str]]:
+        """Extract classification and verdict from result text."""
+        classification = None
+        verdict = None
+        
+        # Extract safety verdict
+        verdict_patterns = [
+            r'Is it safe to interact\?\s*(🟢|🟡|🔴)\s*(SAFE|CAUTION|HIGH RISK|DO NOT INTERACT)',
+            r'(🟢|🟡|🔴)\s*(SAFE|CAUTION|HIGH RISK|DO NOT INTERACT)',
+            r'\*\*(🟢|🟡|🔴)\s*(SAFE|CAUTION|HIGH RISK|DO NOT INTERACT)\*\*'
+        ]
+        for pattern in verdict_patterns:
+            verdict_match = re.search(pattern, result_text, re.IGNORECASE)
+            if verdict_match:
+                verdict_text = verdict_match.group(2)
+                # Normalize to SAFE, CAUTION, HIGH RISK
+                if "HIGH RISK" in verdict_text.upper() or "DO NOT INTERACT" in verdict_text.upper():
+                    verdict = "HIGH RISK"
+                elif "CAUTION" in verdict_text.upper():
+                    verdict = "CAUTION"
+                elif "SAFE" in verdict_text.upper():
+                    verdict = "SAFE"
+                break
+        
+        # Extract classification
+        classification_patterns = [
+            r'Who is this\?\s*(Compromised Wallet|Merchant|Exchange|Bot|MEV|Whale|Treasury|Exploiter|Attacker)',
+            r'classified as (?:a |an )?(Compromised Wallet|Merchant|Exchange|Bot|MEV|Whale|Treasury|Exploiter|Attacker)',
+            r'(Compromised Wallet)',
+            r'(Merchant|Exchange)',
+            r'(Bot|MEV)',
+            r'(Whale|Treasury)',
+            r'(Exploiter|Attacker)'
+        ]
+        for pattern in classification_patterns:
+            match = re.search(pattern, result_text, re.IGNORECASE)
+            if match:
+                classification = match.group(1)
+                if "Compromised Wallet" in result_text and classification != "Compromised Wallet":
+                    if re.search(r'Compromised Wallet', result_text, re.IGNORECASE):
+                        classification = "Compromised Wallet"
+                break
+        
+        return classification, verdict
+    
+    def _build_protection_report(
+        self,
+        address: str,
+        result_text: str,
+        logs: List[str]
+    ) -> ProtectionReport:
+        """Build protection report from analysis result."""
+        # Extract classification and verdict
+        classification, verdict = self._extract_classification_and_verdict(result_text)
+        
+        # Parse errors from logs
+        errors = parse_logs_for_errors(logs)
+        
+        # Build data quality
+        data_quality = DataQuality(
+            complete=not errors["bytes_limited"] and not errors["missing_mv"],
+            partial=errors["bytes_limited"] or errors["other_errors"] > 0,
+            missing_views=errors["missing_mv"],
+            bytes_limited=errors["bytes_limited"],
+            notes=[]
+        )
+        
+        if errors["missing_mv"]:
+            data_quality.notes.append("Optimized aggregates unavailable; used fallback/raw queries when possible")
+        if errors["bytes_limited"]:
+            data_quality.notes.append("Some token/internal patterns could not be checked due to query limits")
+        
+        # Parse metrics from result
+        metrics = parse_metrics_from_result(result_text, logs)
+        
+        # Extract signals
+        signals = extract_signals(metrics, logs, data_quality)
+        
+        # Determine confidence level
+        confidence = "HIGH"
+        if data_quality.bytes_limited or data_quality.partial:
+            confidence = "MEDIUM"
+        if data_quality.bytes_limited and data_quality.partial:
+            confidence = "LOW"
+        if errors["other_errors"] > 2:
+            confidence = "LOW"
+        
+        # Generate interpretation (soft language)
+        interpretation_parts = []
+        if classification:
+            interpretation_parts.append(f"Signals observed may be consistent with {classification} behavior.")
+        if verdict:
+            if verdict == "HIGH RISK":
+                interpretation_parts.append("Patterns suggest elevated risk indicators.")
+            elif verdict == "CAUTION":
+                interpretation_parts.append("Some cautionary signals detected.")
+            else:
+                interpretation_parts.append("No significant risk signals observed.")
+        
+        if data_quality.partial:
+            interpretation_parts.append("Some token/internal patterns could not be checked due to query limits.")
+        
+        interpretation = " ".join(interpretation_parts) if interpretation_parts else "Analysis completed."
+        
+        # Recommend protections
+        protections = recommend_protections(signals, classification or "", verdict or "", data_quality)
+        
+        # Build trace
+        model_name = self.model._model_name if hasattr(self.model, '_model_name') else 'unknown'
+        query_summary = get_query_outcomes_summary(logs)
+        trace = Trace(
+            run_id=str(uuid.uuid4())[:8],
+            timestamp=datetime.now(),
+            model_name=model_name,
+            query_outcomes_summary=query_summary
+        )
+        
+        # Build report
+        report = ProtectionReport(
+            address=address,
+            chain="ethereum",
+            time_window_days=365,
+            classification=classification,
+            verdict=verdict,
+            confidence_level=confidence,
+            observed_signals=signals,
+            interpretation=interpretation,
+            recommended_protections=protections,
+            data_quality=data_quality,
+            trace=trace
+        )
+        
+        return report
     
     def run(self, address: str) -> Dict[str, Any]:
         """
@@ -246,16 +391,36 @@ Provide your Safety Verdict at the TOP of your response, then detailed reasoning
             
             self.memory.log_step("Analysis completed successfully")
             
+            # Build protection report
+            protection_report = self._build_protection_report(
+                address=address,
+                result_text=final_response,
+                logs=self.memory.get_logs()
+            )
+            
             return {
                 'result': final_response,
-                'memory_logs': self.memory.get_logs()
+                'memory_logs': self.memory.get_logs(),
+                'protection_report': protection_report
             }
             
         except Exception as e:
             error_msg = f"Error during analysis: {str(e)}"
             self.memory.log_step(error_msg)
+            
+            # Build minimal protection report even on error
+            try:
+                protection_report = self._build_protection_report(
+                    address=address,
+                    result_text=f"Error: {error_msg}",
+                    logs=self.memory.get_logs()
+                )
+            except:
+                protection_report = None
+            
             return {
                 'result': f"Error: {error_msg}",
-                'memory_logs': self.memory.get_logs()
+                'memory_logs': self.memory.get_logs(),
+                'protection_report': protection_report
             }
 
