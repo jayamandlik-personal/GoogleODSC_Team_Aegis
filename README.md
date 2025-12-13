@@ -303,7 +303,7 @@ WalletLens is optimized for fast queries and cost efficiency:
 
 ## License
 
-Apache 2.0
+Hackathon Project - All Rights Reserved
 
 ## Authors
 
