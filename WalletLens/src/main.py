@@ -488,26 +488,496 @@ st.markdown("""
         color: white !important;
     }
     
-    /* Sidebar expander */
+    /* Sidebar expander - ensure transparent background */
+    section[data-testid="stSidebar"] .streamlit-expander,
+    section[data-testid="stSidebar"] div[data-testid="stExpander"],
+    section[data-testid="stSidebar"] [data-testid="stExpander"] {
+        background: transparent !important;
+        background-color: transparent !important;
+    }
+    
+    section[data-testid="stSidebar"] .streamlit-expander > div,
+    section[data-testid="stSidebar"] div[data-testid="stExpander"] > div {
+        background: transparent !important;
+        background-color: transparent !important;
+    }
+    
+    /* Sidebar expander header - transparent like "No analyses yet" */
     section[data-testid="stSidebar"] .streamlit-expanderHeader {
         color: white !important;
         background: rgba(255, 255, 255, 0.1) !important;
+        background-color: rgba(255, 255, 255, 0.1) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        border-radius: 10px !important;
+        padding: 0.75rem 1rem !important;
+        margin-bottom: 0.5rem !important;
     }
     
     section[data-testid="stSidebar"] .streamlit-expanderHeader:hover {
-        background: rgba(255, 255, 255, 0.2) !important;
+        background: rgba(255, 255, 255, 0.15) !important;
+        background-color: rgba(255, 255, 255, 0.15) !important;
     }
     
-    /* Sidebar expander content */
+    /* Sidebar expander content - transparent background */
     section[data-testid="stSidebar"] .streamlit-expanderContent {
         color: white !important;
-        background: rgba(255, 255, 255, 0.05) !important;
+        background: transparent !important;
+        background-color: transparent !important;
     }
     
     section[data-testid="stSidebar"] .streamlit-expanderContent p,
     section[data-testid="stSidebar"] .streamlit-expanderContent div,
-    section[data-testid="stSidebar"] .streamlit-expanderContent span {
+    section[data-testid="stSidebar"] .streamlit-expanderContent span,
+    section[data-testid="stSidebar"] .streamlit-expanderContent *,
+    section[data-testid="stSidebar"] .streamlit-expanderContent .stMarkdown,
+    section[data-testid="stSidebar"] .streamlit-expanderContent .stMarkdown div,
+    section[data-testid="stSidebar"] .streamlit-expanderContent .stMarkdown p,
+    section[data-testid="stSidebar"] .streamlit-expanderContent .stMarkdown * {
         color: white !important;
+        background: transparent !important;
+        background-color: transparent !important;
+    }
+    
+    /* Force all nested divs in sidebar expander content to be transparent */
+    section[data-testid="stSidebar"] .streamlit-expanderContent div,
+    section[data-testid="stSidebar"] .streamlit-expanderContent div div,
+    section[data-testid="stSidebar"] .streamlit-expanderContent div div div {
+        background: transparent !important;
+        background-color: transparent !important;
+    }
+    
+    /* Override any inline styles in sidebar expander content */
+    section[data-testid="stSidebar"] .streamlit-expanderContent [style*="background"],
+    section[data-testid="stSidebar"] .streamlit-expanderContent div[style*="background"] {
+        background: transparent !important;
+        background-color: transparent !important;
+    }
+    
+    /* Override any white backgrounds on sidebar expander containers */
+    section[data-testid="stSidebar"] .streamlit-expander[style*="background"],
+    section[data-testid="stSidebar"] div[data-testid="stExpander"][style*="background"] {
+        background: transparent !important;
+        background-color: transparent !important;
+    }
+    
+    /* BaseWeb accordion in sidebar - transparent */
+    section[data-testid="stSidebar"] [data-baseweb="accordion"],
+    section[data-testid="stSidebar"] [data-baseweb="accordion"] > div,
+    section[data-testid="stSidebar"] [data-baseweb="accordion"] [data-baseweb="panel"] {
+        background: transparent !important;
+        background-color: transparent !important;
+    }
+    
+    /* All markdown divs in sidebar - transparent background */
+    section[data-testid="stSidebar"] .stMarkdown,
+    section[data-testid="stSidebar"] .stMarkdown > div,
+    section[data-testid="stSidebar"] .stMarkdown div,
+    section[data-testid="stSidebar"] .stMarkdown div div {
+        background: transparent !important;
+        background-color: transparent !important;
+    }
+    
+    /* All divs inside sidebar markdown - transparent */
+    section[data-testid="stSidebar"] .stMarkdown div[style],
+    section[data-testid="stSidebar"] .stMarkdown > div[style] {
+        background: transparent !important;
+        background-color: transparent !important;
+    }
+    
+    /* Override any white backgrounds on sidebar markdown containers */
+    section[data-testid="stSidebar"] .stMarkdown[style*="background"],
+    section[data-testid="stSidebar"] .stMarkdown div[style*="background"] {
+        background: transparent !important;
+        background-color: transparent !important;
+    }
+    
+    /* Aggressive fix for all sidebar expander nested elements - ensure transparent */
+    section[data-testid="stSidebar"] .streamlit-expander *,
+    section[data-testid="stSidebar"] div[data-testid="stExpander"] *,
+    section[data-testid="stSidebar"] [data-testid="stExpander"] * {
+        background: transparent !important;
+        background-color: transparent !important;
+    }
+    
+    /* Force BaseWeb panel content in sidebar expanders to be transparent */
+    section[data-testid="stSidebar"] [data-baseweb="accordion"] [data-baseweb="panel"] *,
+    section[data-testid="stSidebar"] [data-baseweb="accordion"] [data-baseweb="panel"] > div,
+    section[data-testid="stSidebar"] [data-baseweb="accordion"] [data-baseweb="panel"] > div > div {
+        background: transparent !important;
+        background-color: transparent !important;
+    }
+    
+    /* Override any inline styles that set white backgrounds in sidebar expanders */
+    section[data-testid="stSidebar"] .streamlit-expander [style*="background: white"],
+    section[data-testid="stSidebar"] .streamlit-expander [style*="background-color: white"],
+    section[data-testid="stSidebar"] div[data-testid="stExpander"] [style*="background: white"],
+    section[data-testid="stSidebar"] div[data-testid="stExpander"] [style*="background-color: white"] {
+        background: transparent !important;
+        background-color: transparent !important;
+    }
+    
+    /* Ensure all divs in sidebar expander content are transparent */
+    section[data-testid="stSidebar"] .streamlit-expanderContent > div,
+    section[data-testid="stSidebar"] .streamlit-expanderContent > div > div,
+    section[data-testid="stSidebar"] .streamlit-expanderContent > div > div > div {
+        background: transparent !important;
+        background-color: transparent !important;
+    }
+    
+    /* Target BaseWeb accordion panel content specifically */
+    section[data-testid="stSidebar"] [data-baseweb="accordion"] [data-baseweb="panel"] [class],
+    section[data-testid="stSidebar"] [data-baseweb="accordion"] [data-baseweb="panel"] [class] > div,
+    section[data-testid="stSidebar"] [data-baseweb="accordion"] [data-baseweb="panel"] [class] > div > div {
+        background: transparent !important;
+        background-color: transparent !important;
+    }
+    
+    /* Force all possible wrapper divs in sidebar expanders to be transparent */
+    section[data-testid="stSidebar"] div[data-testid="stExpander"] > div[class],
+    section[data-testid="stSidebar"] div[data-testid="stExpander"] > div[class] > div,
+    section[data-testid="stSidebar"] div[data-testid="stExpander"] > div[class] > div > div {
+        background: transparent !important;
+        background-color: transparent !important;
+    }
+    
+    /* Main content expanders - ensure text is visible (NOT sidebar) */
+    .main .streamlit-expanderHeader,
+    .block-container .streamlit-expanderHeader,
+    div[data-testid="stExpander"]:not(section[data-testid="stSidebar"] *) .streamlit-expanderHeader {
+        color: #1a1a1a !important;
+        background: #f9fafb !important;
+    }
+    
+    .main .streamlit-expanderHeader:hover,
+    .block-container .streamlit-expanderHeader:hover,
+    div[data-testid="stExpander"]:not(section[data-testid="stSidebar"] *) .streamlit-expanderHeader:hover {
+        background: #f3f4f6 !important;
+    }
+    
+    /* Main content expander content - ensure text is visible (NOT sidebar) */
+    .main .streamlit-expanderContent,
+    .block-container .streamlit-expanderContent,
+    div[data-testid="stExpander"]:not(section[data-testid="stSidebar"] *) .streamlit-expanderContent {
+        color: #1a1a1a !important;
+        background: white !important;
+    }
+    
+    .main .streamlit-expanderContent p,
+    .main .streamlit-expanderContent div,
+    .main .streamlit-expanderContent span,
+    .main .streamlit-expanderContent li,
+    .main .streamlit-expanderContent ul,
+    .main .streamlit-expanderContent ol,
+    .main .streamlit-expanderContent strong,
+    .main .streamlit-expanderContent em,
+    .main .streamlit-expanderContent *,
+    .block-container .streamlit-expanderContent * {
+        color: #1a1a1a !important;
+    }
+    
+    /* st.text elements inside expanders - ensure visibility (NOT sidebar) */
+    .main .streamlit-expanderContent .stText,
+    .main .streamlit-expanderContent [data-testid="stText"],
+    .main .streamlit-expanderContent pre,
+    .main .streamlit-expanderContent code,
+    .block-container .streamlit-expanderContent .stText,
+    .block-container .streamlit-expanderContent [data-testid="stText"] {
+        color: #1a1a1a !important;
+        background: white !important;
+    }
+    
+    .main .streamlit-expanderContent .stText *,
+    .main .streamlit-expanderContent [data-testid="stText"] *,
+    .main .streamlit-expanderContent pre *,
+    .main .streamlit-expanderContent code *,
+    .block-container .streamlit-expanderContent .stText *,
+    .block-container .streamlit-expanderContent [data-testid="stText"] * {
+        color: #1a1a1a !important;
+    }
+    
+    /* Ensure markdown text in expanders is visible (NOT sidebar) */
+    .main .streamlit-expanderContent .stMarkdown,
+    .main .streamlit-expanderContent .stMarkdown p,
+    .main .streamlit-expanderContent .stMarkdown div,
+    .main .streamlit-expanderContent .stMarkdown span,
+    .main .streamlit-expanderContent .stMarkdown strong,
+    .main .streamlit-expanderContent .stMarkdown em,
+    .block-container .streamlit-expanderContent .stMarkdown,
+    .block-container .streamlit-expanderContent .stMarkdown * {
+        color: #1a1a1a !important;
+    }
+    
+    /* JSON display - ensure text is visible on white background */
+    .stJson {
+        background: white !important;
+        border: 1px solid #e5e7eb !important;
+        border-radius: 8px !important;
+        padding: 1rem !important;
+    }
+    
+    .stJson pre,
+    .stJson code,
+    .stJson * {
+        color: #1a1a1a !important;
+        background: white !important;
+    }
+    
+    /* BaseWeb JSON viewer */
+    [data-baseweb="code"] {
+        background: white !important;
+        color: #1a1a1a !important;
+    }
+    
+    [data-baseweb="code"] * {
+        color: #1a1a1a !important;
+        background: white !important;
+    }
+    
+    /* JSON syntax highlighting - ensure all colors are visible */
+    .stJson pre code,
+    .stJson code span,
+    .stJson [class*="json"],
+    .stJson [class*="code"] {
+        color: #1a1a1a !important;
+    }
+    
+    /* Ensure all expanders in main content have visible text */
+    .main .streamlit-expander,
+    .block-container .streamlit-expander,
+    div[data-testid="stExpander"],
+    [data-testid="stExpander"] {
+        background: white !important;
+        background-color: white !important;
+    }
+    
+    .main .streamlit-expander .streamlit-expanderHeader,
+    .block-container .streamlit-expander .streamlit-expanderHeader {
+        color: #1a1a1a !important;
+        background: #f9fafb !important;
+        background-color: #f9fafb !important;
+    }
+    
+    .main .streamlit-expander .streamlit-expanderContent,
+    .block-container .streamlit-expander .streamlit-expanderContent {
+        background: white !important;
+        background-color: white !important;
+        color: #1a1a1a !important;
+    }
+    
+    .main .streamlit-expander .streamlit-expanderContent *,
+    .block-container .streamlit-expander .streamlit-expanderContent * {
+        color: #1a1a1a !important;
+        background: transparent !important;
+    }
+    
+    /* Force white background for MAIN CONTENT expander content areas only (NOT sidebar) */
+    .main div[data-testid="stExpander"],
+    .main div[data-testid="stExpander"] > div,
+    .block-container div[data-testid="stExpander"],
+    .block-container div[data-testid="stExpander"] > div {
+        background: white !important;
+        background-color: white !important;
+    }
+    
+    .main div[data-testid="stExpander"] .streamlit-expanderContent,
+    .block-container div[data-testid="stExpander"] .streamlit-expanderContent {
+        background: white !important;
+        background-color: white !important;
+        color: #1a1a1a !important;
+    }
+    
+    .main div[data-testid="stExpander"] .streamlit-expanderContent *,
+    .block-container div[data-testid="stExpander"] .streamlit-expanderContent * {
+        color: #1a1a1a !important;
+        background: transparent !important;
+    }
+    
+    /* Force expander container background - MAIN CONTENT ONLY */
+    .main .streamlit-expander,
+    .main div.streamlit-expander,
+    .block-container .streamlit-expander,
+    .block-container div.streamlit-expander {
+        background: white !important;
+        background-color: white !important;
+    }
+    
+    /* Override any dark theme backgrounds on MAIN CONTENT expanders */
+    .main .streamlit-expander[style*="background"],
+    .main div[data-testid="stExpander"][style*="background"],
+    .block-container .streamlit-expander[style*="background"],
+    .block-container div[data-testid="stExpander"][style*="background"] {
+        background: white !important;
+        background-color: white !important;
+    }
+    
+    /* Force expander container background - MAIN CONTENT ONLY */
+    .main div[data-testid="stExpander"] > div,
+    .main div[data-testid="stExpander"] > div > div,
+    .main .streamlit-expander > div,
+    .main .streamlit-expander > div > div,
+    .block-container div[data-testid="stExpander"] > div,
+    .block-container .streamlit-expander > div {
+        background: white !important;
+        background-color: white !important;
+    }
+    
+    /* BaseWeb expander container - MAIN CONTENT ONLY */
+    .main [data-baseweb="accordion"],
+    .main [data-baseweb="accordion"] > div,
+    .main [data-baseweb="accordion"] [data-baseweb="panel"],
+    .block-container [data-baseweb="accordion"],
+    .block-container [data-baseweb="accordion"] > div {
+        background: white !important;
+        background-color: white !important;
+    }
+    
+    /* Force all nested divs in expander to be white - MAIN CONTENT ONLY */
+    .main div[data-testid="stExpander"] div,
+    .main .streamlit-expander div,
+    .block-container div[data-testid="stExpander"] div,
+    .block-container .streamlit-expander div {
+        background: white !important;
+        background-color: white !important;
+    }
+    
+    /* Exception: allow header to have light gray background - MAIN CONTENT ONLY */
+    .main div[data-testid="stExpander"] .streamlit-expanderHeader,
+    .main .streamlit-expander .streamlit-expanderHeader,
+    .block-container div[data-testid="stExpander"] .streamlit-expanderHeader,
+    .block-container .streamlit-expander .streamlit-expanderHeader {
+        background: #f9fafb !important;
+        background-color: #f9fafb !important;
+    }
+    
+    /* But force content area to be white - MAIN CONTENT ONLY */
+    .main div[data-testid="stExpander"] .streamlit-expanderContent,
+    .main .streamlit-expander .streamlit-expanderContent,
+    .block-container div[data-testid="stExpander"] .streamlit-expanderContent,
+    .block-container .streamlit-expander .streamlit-expanderContent {
+        background: white !important;
+        background-color: white !important;
+    }
+    
+    /* Aggressive fix for execution logs expander - target by content */
+    div[data-testid="stExpander"]:has(.streamlit-expanderContent [data-testid="stText"]),
+    .streamlit-expander:has(.streamlit-expanderContent [data-testid="stText"]) {
+        background: white !important;
+        background-color: white !important;
+    }
+    
+    /* Force all possible expander wrapper divs */
+    div[data-testid="stExpander"] *:not(.streamlit-expanderHeader),
+    .streamlit-expander *:not(.streamlit-expanderHeader) {
+        background-color: white !important;
+    }
+    
+    /* Override any inline styles that might set dark backgrounds */
+    div[data-testid="stExpander"][style],
+    .streamlit-expander[style],
+    div[data-testid="stExpander"] div[style],
+    .streamlit-expander div[style] {
+        background: white !important;
+        background-color: white !important;
+    }
+    
+    /* Target BaseWeb accordion panel background */
+    [data-baseweb="accordion"] [data-baseweb="panel"],
+    [data-baseweb="accordion"] [data-baseweb="panel"] > div {
+        background: white !important;
+        background-color: white !important;
+    }
+    
+    /* st.text elements inside expanders - ensure visibility */
+    .streamlit-expanderContent .stText,
+    .streamlit-expanderContent [data-testid="stText"],
+    .streamlit-expanderContent pre,
+    .streamlit-expanderContent code {
+        color: #1a1a1a !important;
+        background: white !important;
+    }
+    
+    .streamlit-expanderContent .stText *,
+    .streamlit-expanderContent [data-testid="stText"] *,
+    .streamlit-expanderContent pre *,
+    .streamlit-expanderContent code * {
+        color: #1a1a1a !important;
+    }
+    
+    /* All text elements in any expander - comprehensive fix */
+    .streamlit-expander .streamlit-expanderContent {
+        background: white !important;
+    }
+    
+    .streamlit-expander .streamlit-expanderContent *:not([style*="color"]) {
+        color: #1a1a1a !important;
+    }
+    
+    /* Specific fix for execution logs - st.text output */
+    [data-testid="stText"] {
+        color: #1a1a1a !important;
+        background: white !important;
+    }
+    
+    [data-testid="stText"] *,
+    [data-testid="stText"] p,
+    [data-testid="stText"] div,
+    [data-testid="stText"] span {
+        color: #1a1a1a !important;
+        background: white !important;
+    }
+    
+    /* Force all text in expanders to be dark */
+    .streamlit-expanderContent [data-testid="stText"],
+    .streamlit-expanderContent [data-testid="stText"] p,
+    .streamlit-expanderContent [data-testid="stText"] div,
+    .streamlit-expanderContent [data-testid="stText"] span,
+    .streamlit-expanderContent [data-testid="stText"] * {
+        color: #1a1a1a !important;
+        background: white !important;
+    }
+    
+    /* Override any dark background on expander content */
+    .streamlit-expanderContent {
+        background: white !important;
+        background-color: white !important;
+    }
+    
+    /* Ensure all child elements inherit white background */
+    .streamlit-expanderContent > * {
+        background: white !important;
+        background-color: white !important;
+    }
+    
+    /* BaseWeb text elements in expanders */
+    [data-baseweb="typo"] {
+        color: #1a1a1a !important;
+    }
+    
+    [data-baseweb="typo"] * {
+        color: #1a1a1a !important;
+    }
+    
+    /* All Streamlit text widgets in expanders */
+    .streamlit-expanderContent [class*="stText"],
+    .streamlit-expanderContent [class*="text"],
+    .streamlit-expanderContent [class*="Text"] {
+        color: #1a1a1a !important;
+        background: white !important;
+    }
+    
+    /* Force text visibility - override any inline styles */
+    .streamlit-expanderContent [style*="color"] {
+        color: #1a1a1a !important;
+    }
+    
+    /* Pre and code blocks in expanders */
+    .streamlit-expanderContent pre,
+    .streamlit-expanderContent code {
+        background: #f9fafb !important;
+        color: #1a1a1a !important;
+        border: 1px solid #e5e7eb !important;
+        padding: 0.5rem !important;
+        border-radius: 4px !important;
     }
     
     /* Sidebar info boxes - transparent with white text */
@@ -966,7 +1436,7 @@ with tab1:
             logs = st.session_state.current_analysis_result.get('memory_logs', []) if st.session_state.current_analysis_result else []
             with st.expander("View detailed execution logs", expanded=True):
                 for log in logs:
-                    st.text(log)
+                        st.text(log)
     
     # Footer
     st.markdown("---")
@@ -978,8 +1448,11 @@ with tab1:
         <p style="color: #9ca3af; font-size: 0.9rem; margin-bottom: 1rem;">
             Powered by Google Gemini AI and BigQuery
         </p>
-        <p style="color: #9ca3af; font-size: 0.85rem;">
+        <p style="color: #9ca3af; font-size: 0.85rem; margin-bottom: 0.5rem;">
             Built by <strong style="color: #6b7280;">Jaya Mandlik</strong> & <strong style="color: #6b7280;">Katie Li</strong> | Team Aegis
+        </p>
+        <p style="color: #9ca3af; font-size: 0.75rem; margin: 0; font-style: italic;">
+            Hackathon Project - All Rights Reserved
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -1296,7 +1769,7 @@ with st.sidebar:
     
     # AI Recommendations
     st.markdown("""
-    <div style="margin-top: 1.5rem; margin-bottom: 0.75rem;">
+    <div style="margin-top: 1.5rem; margin-bottom: 0.75rem; background: transparent !important; background-color: transparent !important;">
         <h3 style="color: white; font-weight: 600; font-size: 0.95rem; margin: 0 0 0.5rem 0;">
             🤖 AI Recommendations
         </h3>
@@ -1329,7 +1802,7 @@ with st.sidebar:
     
     # Quick Stats
     st.markdown("""
-    <div style="margin-top: 1.5rem; margin-bottom: 0.75rem;">
+    <div style="margin-top: 1.5rem; margin-bottom: 0.75rem; background: transparent !important; background-color: transparent !important;">
         <h3 style="color: white; font-weight: 600; font-size: 0.95rem; margin: 0 0 0.5rem 0;">
             📊 Quick Stats
         </h3>
@@ -1373,7 +1846,7 @@ with st.sidebar:
     
     # Recent Analyses
     st.markdown("""
-    <div style="margin-top: 1.5rem; margin-bottom: 0.75rem;">
+    <div style="margin-top: 1.5rem; margin-bottom: 0.75rem; background: transparent !important; background-color: transparent !important;">
         <h3 style="color: white; font-weight: 600; font-size: 0.95rem; margin: 0 0 0.5rem 0;">
             📜 Recent Analyses
         </h3>
@@ -1386,18 +1859,18 @@ with st.sidebar:
                 if analysis['safety_verdict']:
                     verdict_emoji = "🟢" if "SAFE" in analysis['safety_verdict'] else "🟡" if "CAUTION" in analysis['safety_verdict'] else "🔴"
                     st.markdown(f"""
-                    <div style="color: white; margin-bottom: 0.5rem;">
+                    <div style="color: white; margin-bottom: 0.5rem; background: transparent !important; background-color: transparent !important;">
                         <strong>{verdict_emoji} {analysis['safety_verdict']}</strong>
                     </div>
                     """, unsafe_allow_html=True)
                 if analysis['classification']:
                     st.markdown(f"""
-                    <div style="color: white; margin-bottom: 0.5rem;">
+                    <div style="color: white; margin-bottom: 0.5rem; background: transparent !important; background-color: transparent !important;">
                         <strong>Type:</strong> {analysis['classification']}
                     </div>
                     """, unsafe_allow_html=True)
                 st.markdown(f"""
-                <div style="color: rgba(255, 255, 255, 0.8); font-size: 0.8rem;">
+                <div style="color: rgba(255, 255, 255, 0.8); font-size: 0.8rem; background: transparent !important; background-color: transparent !important;">
                     {analysis['timestamp'].strftime('%Y-%m-%d %H:%M')}
                 </div>
                 """, unsafe_allow_html=True)
@@ -1410,7 +1883,7 @@ with st.sidebar:
     
     # Help & Support
     st.markdown("""
-    <div style="margin-top: 1.5rem; margin-bottom: 0.75rem;">
+    <div style="margin-top: 1.5rem; margin-bottom: 0.75rem; background: transparent !important; background-color: transparent !important;">
         <h3 style="color: white; font-weight: 600; font-size: 0.95rem; margin: 0 0 0.5rem 0;">
             💡 Help & Support
         </h3>
@@ -1419,7 +1892,7 @@ with st.sidebar:
     
     with st.expander("📖 How to use", expanded=False):
         st.markdown("""
-        <div style="color: white; font-size: 0.9rem; line-height: 1.6;">
+        <div style="color: white; font-size: 0.9rem; line-height: 1.6; background: transparent !important; background-color: transparent !important;">
         1. Enter a wallet address<br>
         2. Click "Analyze Wallet"<br>
         3. Review User View results<br>
@@ -1429,7 +1902,7 @@ with st.sidebar:
     
     with st.expander("🔗 Integration", expanded=False):
         st.markdown("""
-        <div style="color: white; font-size: 0.9rem; line-height: 1.6;">
+        <div style="color: white; font-size: 0.9rem; line-height: 1.6; background: transparent !important; background-color: transparent !important;">
         • REST API<br>
         • Webhook Integration<br>
         • WebSocket API<br>
@@ -1447,8 +1920,11 @@ with st.sidebar:
         <p style="color: rgba(255, 255, 255, 0.9); font-size: 0.85rem; margin-bottom: 0.25rem;">
             Team Aegis
         </p>
-        <p style="color: rgba(255, 255, 255, 0.8); font-size: 0.75rem; margin: 0;">
+        <p style="color: rgba(255, 255, 255, 0.8); font-size: 0.75rem; margin-bottom: 0.25rem;">
             Built by <strong style="color: white;">Jaya Mandlik</strong> & <strong style="color: white;">Katie Li</strong>
+        </p>
+        <p style="color: rgba(255, 255, 255, 0.7); font-size: 0.7rem; margin: 0; font-style: italic;">
+            Hackathon Project - All Rights Reserved
         </p>
     </div>
     """, unsafe_allow_html=True)
